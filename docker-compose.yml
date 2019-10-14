@@ -30,6 +30,34 @@ services:
     image: "containous/whoami"
     container_name: "whoami-service"
 
+  book:
+    image: "traefik:v2.0"
+    container_name: "book"
+    links:
+      - whoami-service
+    command:
+      #- "--log.level=DEBUG"
+      - "--providers.file.filename=/tmp/book.yaml"
+      - "--providers.file.watch=true"
+      - "--entryPoints.web.address=:8080"
+      - "--entryPoints.traefik.address=:8081"
+      - "--ping=true"
+      - "--log=true"
+      - "--log.format=json"
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+    ports:
+      - "38080:8080"
+      - "38081:8081"
+    volumes:
+      - "./book.yaml:/tmp/book.yaml:ro"
+
+  book-service:
+    build: ./book
+    container_name: "book-service"
+
   auth:
     image: "traefik:v2.0"
     container_name: "auth"

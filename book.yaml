@@ -1,0 +1,71 @@
+
+http:
+  routers:
+    app:
+      rule: "Host(`book.localhost`)"
+      service: service-app
+      middlewares:
+        - test-header
+        - test-inflightreq
+        - test-limit
+        - test-auth
+        - test-ratelimit
+        - test-retry
+        - test-compress
+  services:
+    service-app:
+      loadBalancer:
+        servers:
+          - url: "http://book-service:3000/"
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        amount: 80
+    test-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        sourceCriterion:
+          requestHeaderName: "X-Auth-User"
+    test-limit:
+      buffering:
+        maxRequestBodyBytes: 20000
+        memRequestBodyBytes: 8000
+    test-auth:
+      forwardAuth:
+        address: "http://auth:8080/v1/auth"
+        authResponseHeaders:
+          - "X-Auth-User"
+          - "X-Secret"
+    test-header:
+      headers:
+        accessControlAllowMethods:
+          - "GET"
+          - "HEAD"
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+        accessControlAllowOrigin: "*"
+        accessControlAllowHeaders:
+          - "authorization"
+          - "content-type"
+          - "accept"
+          - "x-next-page"
+        accessControlExposeHeaders:
+          - "x-page"
+          - "x-limit"
+          - "x-count"
+          - "x-total"
+          - "x-to"
+          - "x-from"
+        accessControlMaxAge: 0
+        addVaryHeader: true
+        customResponseHeaders:
+          X-Powered-By: ""
+    test-retry:
+      retry:
+        attempts: 4
+    test-compress:
+      compress: {}
+
